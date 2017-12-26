@@ -58,7 +58,73 @@ def layers(vgg_layer3_out, vgg_layer4_out, vgg_layer7_out, num_classes):
     :return: The Tensor for the last layer of output
     """
     # TODO: Implement function
-    return None
+    # We must add 1x1 convolutions on top of
+    # the VGG to reduce the number of filters from 4096 to
+    # the number of classes for our specific model.
+    # We just do binary classification at that step --> pixel road or not road
+   conv_1by1_layer_7 = tf.layers.conv2d(
+        inputs=vgg_layer7_out, 
+        filters=num_classes,
+        kernel_size=1, 
+        strides=(1,1),
+        padding="same",
+        kernel_initializer=tf.truncated_normal_initializer(stddev=0.01),
+        kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
+    
+    # transpose the 7th layer for being the same resolution as the forth pooling layer
+    upsampled_layer_7 = tf.layers.conv2d_transpose(
+        inputs=conv_1by1_layer_7, 
+        filters=num_classes,
+        kernel_size=4, 
+        strides=(2,2),
+        padding="same",
+        kernel_initializer=tf.truncated_normal_initializer(stddev=0.01),
+        kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
+
+    #1x1 convolution for the fourth pooling layer
+    conv_1by1_layer_4 = tf.layers.conv2d(
+        inputs=vgg_layer4_out, 
+        filters=num_classes,
+        kernel_size=1, 
+        strides=(1,1),
+        padding="same",
+        kernel_initializer=tf.truncated_normal_initializer(stddev=0.01),
+        kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
+
+    # add skip connection from layer 4 to 7
+    skip_connection_4_to_7 = tf.add(upsampled_layer_7, conv_1by1_layer_4)
+
+    upsampled_skip_connection_4_to_7 = tf.layers.conv2d_transpose(
+        inputs=skip_connection_4_to_7, 
+        filters=num_classes,
+        kernel_size=4, 
+        strides=(2,2),
+        padding="same",
+        kernel_initializer=tf.truncated_normal_initializer(stddev=0.01),
+        kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
+
+    conv_1by1_layer_3 = tf.layers.conv2d(
+        inputs=vgg_layer3_out, 
+        filters=num_classes,
+        kernel_size=1, 
+        strides=(1,1),
+        padding="same",
+        kernel_initializer=tf.truncated_normal_initializer(stddev=0.01),
+        kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
+
+    skip_connection_3_to_7 = tf.add(upsampled_skip_connection_4_to_7, conv_1by1_layer_3)
+
+    upsampled_final_layer = tf.layers.conv2d_transpose(
+        inputs=skip_connection_3_to_7, 
+        filters=num_classes,
+        kernel_size=16, 
+        strides=(8,8),
+        padding="same",
+        kernel_initializer=tf.truncated_normal_initializer(stddev=0.01),
+        kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
+
+    return upsampled_final_layer
+
 tests.test_layers(layers)
 
 
@@ -72,6 +138,8 @@ def optimize(nn_last_layer, correct_label, learning_rate, num_classes):
     :return: Tuple of (logits, train_op, cross_entropy_loss)
     """
     # TODO: Implement function
+
+    
     return None, None, None
 tests.test_optimize(optimize)
 
