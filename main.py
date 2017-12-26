@@ -199,6 +199,7 @@ def run():
         # TODO: Build NN using load_vgg, layers, and optimize function
         correct_label = tf.placeholder(tf.float32, [None, image_shape[0], image_shape[1], num_classes])
         learning_rate = 1e-4
+        
 
         image_input, keep_prob, vgg_layer3_out, vgg_layer4_out, vgg_layer7_out = load_vgg(sess, vgg_path)
         nn_last_layer = layers(vgg_layer3_out, vgg_layer4_out, vgg_layer7_out, num_classes)
@@ -206,6 +207,7 @@ def run():
 
         # TODO: Train NN using the train_nn function
         sess.run(tf.global_variables_initializer())
+        print("Training Session started")
         train_nn(
             sess=sess, 
             epochs=13, 
